@@ -485,4 +485,40 @@ describe('hard-wrapped terminal HTTP clicks', () => {
     expect(terminal.options.mouseEventsRequireAlt).toBe(false)
     disposable.dispose()
   })
+
+  it('opens custom app schemes through shell and skips HTTP routing', () => {
+    const { terminal, clearSelection } = makeTerminal({
+      urlRows: ['obsidian://open?vault=notes']
+    })
+    const event = mouseEventForRow(0)
+
+    expect(
+      handleTerminalWebLinkClick('obsidian://open?vault=notes', event, {
+        terminal,
+        worktreeId: 'wt-1',
+        worktreePath: '/tmp',
+        startupCwd: '/tmp'
+      })
+    ).toBe(true)
+    expect(event.preventDefault).toHaveBeenCalled()
+    expect(openUrlMock).toHaveBeenCalledOnce()
+    expect(openUrlMock).toHaveBeenCalledWith('obsidian://open?vault=notes')
+    expect(clearSelection).toHaveBeenCalled()
+  })
+
+  it('does not open custom app schemes without an owned gesture', () => {
+    const { terminal } = makeTerminal({
+      urlRows: ['obsidian://open?vault=notes']
+    })
+
+    expect(
+      handleTerminalWebLinkClick('obsidian://open?vault=notes', undefined, {
+        terminal,
+        worktreeId: 'wt-1',
+        worktreePath: '/tmp',
+        startupCwd: '/tmp'
+      })
+    ).toBe(false)
+    expect(openUrlMock).not.toHaveBeenCalled()
+  })
 })

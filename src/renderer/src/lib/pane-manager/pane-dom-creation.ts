@@ -5,8 +5,12 @@ import { WebLinksAddon } from '@xterm/addon-web-links'
 import { Terminal, type ILink, type ITerminalOptions } from '@xterm/xterm'
 
 import { createWrappedTerminalHttpLinkProvider } from '../../components/terminal-pane/links/http/wrapped-terminal-http-link-provider'
-import { TERMINAL_HTTP_URL_REGEX } from '../../../../shared/terminal/links/terminal-http-url-extraction'
 import type { TerminalLeafId } from '../../../../shared/workspace-layout/stable-pane-id'
+import {
+  classifyExternalAppUrl,
+  TERMINAL_WEB_AND_APP_URL_REGEX
+} from '../../../../shared/external-app-url'
+import { getTerminalCustomAppSchemeOpenHint } from '@/components/terminal-pane/links/terminal-link-open-hints'
 import type { DragReorderCallbacks, DragReorderState } from './pane-drag-reorder'
 import { attachPaneDrag } from './pane-drag-pointer'
 import type { ManagedPaneInternal, PaneManagerOptions } from './pane-manager-types'
@@ -19,6 +23,10 @@ import { installTerminalMouseEncodingTracker } from './terminal-mouse-encoding-t
 import { StableCellFitAddon } from './terminal-stable-cell-fit-addon'
 
 function defaultLinkTooltipText(uri: string, openLinkHint: string): string {
+  const classified = classifyExternalAppUrl(uri)
+  if (classified.ok && classified.kind === 'custom') {
+    return `${uri} (${getTerminalCustomAppSchemeOpenHint()})`
+  }
   return `${uri} (${openLinkHint})`
 }
 
@@ -109,7 +117,9 @@ export function createPaneDOM(
   }
   const webLinksAddon = new WebLinksAddon(options.onLinkClick ? linkHandlers.activate : undefined, {
     ...linkHandlers,
-    urlRegex: TERMINAL_HTTP_URL_REGEX
+    // Why: include custom app schemes (obsidian://, vscode://, …) so agents'
+    // OS-handler links are clickable; open still requires main-process approval (#13225).
+    urlRegex: TERMINAL_WEB_AND_APP_URL_REGEX
   })
 
   const panePointerDownHandler = (event: PointerEvent): void => {

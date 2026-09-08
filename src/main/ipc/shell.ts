@@ -15,6 +15,7 @@ import {
   type RepoIconPickResult
 } from '../../shared/repo-icon-pick-failure-copy'
 import type { Store } from '../persistence/loading-store/store'
+import { openExternalAppUrlWithUserApproval } from '../external-app-url-open'
 import {
   EXTERNAL_EDITOR_CLI_COMMAND,
   launchExternalEditor,
@@ -171,19 +172,8 @@ export function registerShellHandlers(
       openInExternalEditor(store, request, listRuntimeEnvironments)
   )
 
-  ipcMain.handle('shell:openUrl', (_event, rawUrl: string) => {
-    let parsed: URL
-    try {
-      parsed = new URL(rawUrl)
-    } catch {
-      return
-    }
-
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-      return
-    }
-
-    return shell.openExternal(parsed.toString())
+  ipcMain.handle('shell:openUrl', async (_event, rawUrl: string) => {
+    await openExternalAppUrlWithUserApproval(rawUrl)
   })
 
   ipcMain.handle(

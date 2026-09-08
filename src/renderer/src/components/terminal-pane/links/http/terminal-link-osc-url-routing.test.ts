@@ -58,4 +58,30 @@ describe('handleOscLink', () => {
     })
     expect(openUrlMock).not.toHaveBeenCalled()
   })
+
+  it('opens custom app schemes through shell after an owned gesture', () => {
+    setPlatform('Macintosh')
+
+    expect(
+      handleOscLink('obsidian://open?vault=notes', { metaKey: true, ctrlKey: false }, deps)
+    ).toBe(true)
+    expect(openUrlMock).toHaveBeenCalledWith('obsidian://open?vault=notes')
+    expect(createBrowserTabMock).not.toHaveBeenCalled()
+  })
+
+  it('does not open custom app schemes without an owned gesture', () => {
+    setPlatform('Macintosh')
+
+    expect(handleOscLink('obsidian://open?vault=notes', undefined, deps)).toBe(false)
+    expect(openUrlMock).not.toHaveBeenCalled()
+  })
+
+  it('does not open denied schemes from OSC 8', () => {
+    setPlatform('Macintosh')
+
+    expect(handleOscLink('javascript:alert(1)', { metaKey: true, ctrlKey: false }, deps)).toBe(
+      false
+    )
+    expect(openUrlMock).not.toHaveBeenCalled()
+  })
 })

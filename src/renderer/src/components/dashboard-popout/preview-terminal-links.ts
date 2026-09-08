@@ -2,7 +2,7 @@ import type { IBufferRange, ILinkHandler, Terminal } from '@xterm/xterm'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { installGuardedLinkProviderRegistration } from '@/lib/pane-manager/terminal-link-provider-guard'
 import { isTerminalLinkDirectActivation as isTerminalHttpLinkActivation } from '@/components/terminal-pane/links/gestures/terminal-link-activation'
-import { TERMINAL_HTTP_URL_REGEX } from '../../../../shared/terminal/links/terminal-http-url-extraction'
+import { TERMINAL_WEB_AND_APP_URL_REGEX } from '../../../../shared/external-app-url'
 
 export type PreviewTerminalLinkHandler = Omit<ILinkHandler, 'activate' | 'leave'> & {
   activate(event: MouseEvent, uri: string, range?: IBufferRange): void
@@ -40,7 +40,7 @@ export function installPreviewTerminalLinks(
     new WebLinksAddon(handlers?.activate ?? activate, {
       hover: handlers?.hover ?? hover,
       leave: handlers?.leave ?? leave,
-      urlRegex: TERMINAL_HTTP_URL_REGEX
+      urlRegex: TERMINAL_WEB_AND_APP_URL_REGEX
     })
   )
   // Why: without a linkHandler xterm's OSC 8 default confirm()s and window.open()s, which Electron blocks (#34229).
