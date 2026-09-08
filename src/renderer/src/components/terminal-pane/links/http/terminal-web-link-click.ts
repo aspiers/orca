@@ -4,7 +4,10 @@ import type {
 } from '@/lib/browser/navigation/http-link-destinations'
 import type { Terminal } from '@xterm/xterm'
 import type { LinkHandlerDeps } from '../files/terminal-link-handlers'
-import { isTerminalOwnedLinkGesture } from '../gestures/terminal-link-activation'
+import {
+  isTerminalLinkDirectActivation,
+  isTerminalOwnedLinkGesture
+} from '../gestures/terminal-link-activation'
 import { handleOscLink } from '../terminal-osc-link-routing'
 import {
   findHttpLinkAtTerminalMouseEvent,
@@ -35,17 +38,25 @@ export function handleTerminalWebLinkClick(
   event: MouseEvent | undefined,
   deps: TerminalWebLinkClickDeps
 ): boolean {
-  if (!event || !isTerminalOwnedLinkGesture(event)) {
+  if (!event) {
     return false
   }
 
-  // Why: custom app schemes skip in-app browser routing; main prompts then openExternal (#13225).
+  // Why: custom OS handoff is Mod/Ctrl only. Plain click stays on the HTTP action
+  // menu path and must not open a confirm dialog (#13225).
   const classified = classifyExternalAppUrl(url)
   if (classified.ok && classified.kind === 'custom') {
+    if (!isTerminalLinkDirectActivation(event)) {
+      return false
+    }
     event.preventDefault()
     void Promise.resolve(window.api.shell.openUrl(classified.url)).catch(() => undefined)
     deps.terminal?.clearSelection()
     return true
+  }
+
+  if (!isTerminalOwnedLinkGesture(event)) {
+    return false
   }
 
   let handled: boolean

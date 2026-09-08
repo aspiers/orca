@@ -486,6 +486,65 @@ describe('hard-wrapped terminal HTTP clicks', () => {
     disposable.dispose()
   })
 
+  it('does not hand off a custom app URL on a plain click', () => {
+    const { terminal } = makeTerminal({ urlRows: ['obsidian://open?vault=notes'] })
+    const event = mouseEventForRow(0, { plain: true })
+    handleTerminalWebLinkClick('obsidian://open?vault=notes', event, {
+      terminal,
+      worktreeId: 'wt-1',
+      worktreePath: '/tmp',
+      startupCwd: '/tmp'
+    })
+    expect(openUrlMock).not.toHaveBeenCalled()
+  })
+
+  it('does not hand off a custom app URL on the wrong platform modifier', () => {
+    const { terminal } = makeTerminal({ urlRows: ['obsidian://open?vault=notes'] })
+    const event = {
+      button: 0,
+      metaKey: false,
+      ctrlKey: true,
+      altKey: false,
+      shiftKey: false,
+      preventDefault: vi.fn()
+    } as unknown as MouseEvent
+    expect(
+      handleTerminalWebLinkClick('obsidian://open?vault=notes', event, {
+        terminal,
+        worktreeId: 'wt-1',
+        worktreePath: '/tmp',
+        startupCwd: '/tmp'
+      })
+    ).toBe(false)
+    expect(openUrlMock).not.toHaveBeenCalled()
+  })
+
+  it('opens custom app schemes with Ctrl+click on non-Mac', () => {
+    vi.stubGlobal('navigator', { userAgent: 'Windows NT 10.0' })
+    const { terminal, clearSelection } = makeTerminal({
+      urlRows: ['obsidian://open?vault=notes']
+    })
+    const event = {
+      button: 0,
+      metaKey: false,
+      ctrlKey: true,
+      altKey: false,
+      shiftKey: false,
+      preventDefault: vi.fn()
+    } as unknown as MouseEvent
+    expect(
+      handleTerminalWebLinkClick('obsidian://open?vault=notes', event, {
+        terminal,
+        worktreeId: 'wt-1',
+        worktreePath: '/tmp',
+        startupCwd: '/tmp'
+      })
+    ).toBe(true)
+    expect(openUrlMock).toHaveBeenCalledOnce()
+    expect(openUrlMock).toHaveBeenCalledWith('obsidian://open?vault=notes')
+    expect(clearSelection).toHaveBeenCalled()
+  })
+
   it('opens custom app schemes through shell and skips HTTP routing', () => {
     const { terminal, clearSelection } = makeTerminal({
       urlRows: ['obsidian://open?vault=notes']

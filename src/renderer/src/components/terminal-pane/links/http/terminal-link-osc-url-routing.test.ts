@@ -76,6 +76,33 @@ describe('handleOscLink', () => {
     expect(openUrlMock).not.toHaveBeenCalled()
   })
 
+  it('does not hand off a custom OSC URL on a plain click', () => {
+    setPlatform('Macintosh')
+
+    expect(
+      handleOscLink('obsidian://open?vault=notes', { metaKey: false, ctrlKey: false }, deps)
+    ).toBe(false)
+    expect(openUrlMock).not.toHaveBeenCalled()
+  })
+
+  it('does not hand off a custom OSC URL on the wrong platform modifier', () => {
+    setPlatform('Macintosh')
+
+    expect(
+      handleOscLink('obsidian://open?vault=notes', { metaKey: false, ctrlKey: true }, deps)
+    ).toBe(false)
+    expect(openUrlMock).not.toHaveBeenCalled()
+  })
+
+  it('opens custom OSC schemes with Ctrl+click on non-Mac', () => {
+    setPlatform('Windows')
+
+    expect(
+      handleOscLink('obsidian://open?vault=notes', { metaKey: false, ctrlKey: true }, deps)
+    ).toBe(true)
+    expect(openUrlMock).toHaveBeenCalledWith('obsidian://open?vault=notes')
+  })
+
   it('does not open denied schemes from OSC 8', () => {
     setPlatform('Macintosh')
 

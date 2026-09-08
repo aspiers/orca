@@ -112,9 +112,12 @@ export function handleOscLink(
           })
         : null
   if (!file) {
-    // Why: OSC 8 custom schemes must match plain-text WebLinks: confirm then openExternal (#13225).
+    // Why: OSC custom handoff matches WebLinks: real Mod/Ctrl only, not plain action (#13225).
     const classified = classifyExternalAppUrl(rawText)
     if (classified.ok && classified.kind === 'custom') {
+      if (!isTerminalLinkDirectActivation(event)) {
+        return false
+      }
       void Promise.resolve(window.api.shell.openUrl(classified.url)).catch(() => undefined)
       return finish(true)
     }
