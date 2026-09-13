@@ -161,6 +161,53 @@ describe('keybindings', () => {
     expect(keybindingMatchesAction('editor.previousChange', f7, 'darwin')).toBe(false)
   })
 
+  it('accepts Shift+arrow and Shift+paging keys for opt-in actions, but never Shift+text keys', () => {
+    // Arrows and paging keys produce no text, so Shift cannot swallow typed input.
+    for (const key of ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown']) {
+      expect(normalizeKeybindingListForAction('editor.nextChange', `Shift+${key}`)).toEqual([
+        `Shift+${key}`
+      ])
+    }
+
+    // Still gated on the action opting in.
+    expect(normalizeKeybinding('Shift+ArrowUp')).toMatchObject({ ok: false })
+
+    // Text-producing keys stay unsafe even for an opt-in action.
+    for (const key of ['P', '1', 'Space']) {
+      expect(
+        keybindingFromInputForAction(
+          'editor.nextChange',
+          { key, code: key, control: false, meta: false, alt: false, shift: true },
+          'linux'
+        )
+      ).toMatchObject({ ok: false })
+    }
+
+    // Shift+Tab and Shift+Enter carry terminal meaning and are deliberately excluded.
+    for (const key of ['Tab', 'Enter']) {
+      expect(
+        keybindingFromInputForAction(
+          'editor.nextChange',
+          { key, code: key, control: false, meta: false, alt: false, shift: true },
+          'linux'
+        )
+      ).toMatchObject({ ok: false })
+    }
+
+    const shiftArrowUp = {
+      key: 'ArrowUp',
+      code: 'ArrowUp',
+      control: false,
+      meta: false,
+      alt: false,
+      shift: true
+    }
+    expect(keybindingFromInputForAction('editor.nextChange', shiftArrowUp, 'linux')).toEqual({
+      ok: true,
+      value: 'Shift+ArrowUp'
+    })
+  })
+
   it('formats keybindings with platform labels', () => {
     expect(formatKeybindingList(['Mod+Shift+J'], 'darwin')).toBe('⌘⇧J')
     expect(formatKeybindingList(['Mod+Shift+J'], 'linux')).toBe('Ctrl+Shift+J')

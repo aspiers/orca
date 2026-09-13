@@ -253,28 +253,32 @@ export function canonicalizeParsedKeybinding(parsed: ParsedKeybinding): string {
   return parts.join('+')
 }
 
+// Arrows and paging keys produce no text, so Shift+<key> cannot swallow typed
+// input the way Shift+<letter> would.
+const NON_TEXT_NAVIGATION_KEYS = [
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'PageUp',
+  'PageDown'
+]
+
+// Safe bare, but left out of the Shift set: Shift+Tab and Shift+Enter already
+// carry terminal meaning.
+const SAFE_BARE_EDITING_KEYS = ['Backspace', 'Delete', 'Enter', 'Escape', 'Tab']
+
 export function isSafeBareKey(parsed: ParsedKeybinding): boolean {
   if (parsed.mod || parsed.meta || parsed.control || parsed.alt) {
     return false
   }
   // Function keys produce no text, so they're safe bare or with Shift (Shift+letter stays unsafe).
   if (parsed.shift) {
-    return isFunctionKeyToken(parsed.key)
+    return isFunctionKeyToken(parsed.key) || NON_TEXT_NAVIGATION_KEYS.includes(parsed.key)
   }
   return (
     isFunctionKeyToken(parsed.key) ||
-    [
-      'Backspace',
-      'Delete',
-      'Enter',
-      'Escape',
-      'Tab',
-      'ArrowLeft',
-      'ArrowRight',
-      'ArrowUp',
-      'ArrowDown',
-      'PageUp',
-      'PageDown'
-    ].includes(parsed.key)
+    NON_TEXT_NAVIGATION_KEYS.includes(parsed.key) ||
+    SAFE_BARE_EDITING_KEYS.includes(parsed.key)
   )
 }
