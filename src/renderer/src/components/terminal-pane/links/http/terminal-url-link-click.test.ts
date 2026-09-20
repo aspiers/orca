@@ -156,6 +156,19 @@ function mouseEventForRow(
   } as unknown as MouseEvent
 }
 
+function makeMouseEvent(init: Partial<MouseEvent>): MouseEvent {
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Test mock for DOM MouseEvent in node test environment.
+  return {
+    button: 0,
+    metaKey: false,
+    ctrlKey: false,
+    altKey: false,
+    shiftKey: false,
+    preventDefault: vi.fn(),
+    ...init
+  } as never
+}
+
 describe('hard-wrapped terminal HTTP clicks', () => {
   beforeEach(() => {
     vi.stubGlobal('navigator', { userAgent: 'Macintosh' })
@@ -500,14 +513,7 @@ describe('hard-wrapped terminal HTTP clicks', () => {
 
   it('does not hand off a custom app URL on the wrong platform modifier', () => {
     const { terminal } = makeTerminal({ urlRows: ['obsidian://open?vault=notes'] })
-    const event = {
-      button: 0,
-      metaKey: false,
-      ctrlKey: true,
-      altKey: false,
-      shiftKey: false,
-      preventDefault: vi.fn()
-    } as unknown as MouseEvent
+    const event = makeMouseEvent({ ctrlKey: true })
     expect(
       handleTerminalWebLinkClick('obsidian://open?vault=notes', event, {
         terminal,
@@ -524,14 +530,7 @@ describe('hard-wrapped terminal HTTP clicks', () => {
     const { terminal, clearSelection } = makeTerminal({
       urlRows: ['obsidian://open?vault=notes']
     })
-    const event = {
-      button: 0,
-      metaKey: false,
-      ctrlKey: true,
-      altKey: false,
-      shiftKey: false,
-      preventDefault: vi.fn()
-    } as unknown as MouseEvent
+    const event = makeMouseEvent({ ctrlKey: true })
     expect(
       handleTerminalWebLinkClick('obsidian://open?vault=notes', event, {
         terminal,
