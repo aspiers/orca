@@ -1,3 +1,5 @@
+import { PROSE_URL_AFTER_SCHEME_SOURCE } from './prose-url-boundary'
+
 /**
  * Classify URLs for shell handoff. http(s) stay on the existing path;
  * other schemes need an explicit user-approved openExternal (#13225).
@@ -38,12 +40,14 @@ export type ExternalAppUrlClassification =
   | { ok: false; reason: 'invalid' | 'denied' | 'unsupported' }
 
 /** Match http(s) and custom app schemes like obsidian://, vscode:// in terminal text. */
-// Why: trailing punctuation stripped like xterm's default http regex; ^/[ unescaped
-// inside [] (oxlint no-useless-escape). Lookbehind prevents mid-token restarts
-// (file → ile://); negative lookahead skips denied schemes so they are not
-// underlined as dead links (#13225).
-export const TERMINAL_WEB_AND_APP_URL_REGEX =
-  /(?<![a-zA-Z0-9+.-])(?:https?|HTTPS?|(?!(?:javascript|data|vbscript|file|about|blob|chrome-extension|chrome|ms-appx-web|ms-appx|smb|jnlp|ms-msdt|search-ms|search|shell|hcp|ms-appinstaller|ms-its|ms-help|ms-cxh-full|ms-cxh|jar|view-source)(?![a-zA-Z0-9+.-]))[a-z][a-z0-9+.-]{1,31}):[/]{2}[^\s"'!*(){}|\\^<>`]*[^\s"':,.!?{}|\\^~[\]`()<>]/
+// Why: the url body reuses the terminal HTTP pattern (IPv6 hosts, prose punctuation).
+// No `i` flag, so custom schemes stay lowercase-only (`Error://` is log noise) while
+// http(s) keeps any case. Lookbehind prevents mid-token restarts (file → ile://);
+// negative lookahead skips denied schemes so they are not underlined as dead links (#13225).
+export const TERMINAL_WEB_AND_APP_URL_REGEX = new RegExp(
+  String.raw`(?<![a-zA-Z0-9+.-])(?:[Hh][Tt][Tt][Pp][Ss]?|(?!(?:javascript|data|vbscript|file|about|blob|chrome-extension|chrome|ms-appx-web|ms-appx|smb|jnlp|ms-msdt|search-ms|search|shell|hcp|ms-appinstaller|ms-its|ms-help|ms-cxh-full|ms-cxh|jar|view-source)(?![a-zA-Z0-9+.-]))[a-z][a-z0-9+.-]{1,31})${PROSE_URL_AFTER_SCHEME_SOURCE}`,
+  'u'
+)
 
 export function classifyExternalAppUrl(rawUrl: string): ExternalAppUrlClassification {
   const trimmed = rawUrl.trim()

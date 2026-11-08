@@ -77,20 +77,29 @@ describe('classifyExternalAppUrl', () => {
 describe('TERMINAL_WEB_AND_APP_URL_REGEX', () => {
   it('matches http and custom app URLs in text', () => {
     const text = 'see https://ex.com and obsidian://open?vault=v file.md'
-    const matches = text.match(new RegExp(TERMINAL_WEB_AND_APP_URL_REGEX.source, 'g'))
+    const matches = text.match(new RegExp(TERMINAL_WEB_AND_APP_URL_REGEX.source, 'gu'))
     expect(matches).toEqual(expect.arrayContaining(['https://ex.com', 'obsidian://open?vault=v']))
   })
 
   it('does not linkify denied schemes', () => {
     const text =
       'file:///etc/passwd javascript:alert(1) vbscript://msgbox chrome://settings data:text/html,hi smb://host/share jnlp://x/app.jnlp'
-    const matches = text.match(new RegExp(TERMINAL_WEB_AND_APP_URL_REGEX.source, 'g'))
+    const matches = text.match(new RegExp(TERMINAL_WEB_AND_APP_URL_REGEX.source, 'gu'))
     expect(matches).toBeNull()
   })
 
   it('does not linkify uppercase custom schemes', () => {
     expect(
-      'Error://example'.match(new RegExp(TERMINAL_WEB_AND_APP_URL_REGEX.source, 'g'))
+      'Error://example'.match(new RegExp(TERMINAL_WEB_AND_APP_URL_REGEX.source, 'gu'))
     ).toBeNull()
+  })
+
+  it('keeps terminal HTTP link boundaries for IPv6 hosts and prose punctuation', () => {
+    const text = 'http://[::1] https://example.com/a。次 beads://p/x」です'
+    expect(text.match(new RegExp(TERMINAL_WEB_AND_APP_URL_REGEX.source, 'gu'))).toEqual([
+      'http://[::1]',
+      'https://example.com/a',
+      'beads://p/x'
+    ])
   })
 })

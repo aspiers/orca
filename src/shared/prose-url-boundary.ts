@@ -13,8 +13,11 @@ const PROSE_HTTP_URL_BODY_SOURCE =
   String.raw`(?:${NOT_PROSE_URL_TERMINATOR}[^\s"'!*(){}|\\^<>\x60])*` +
   String.raw`${NOT_PROSE_URL_TERMINATOR}[^\s"':,.!?{}|\\^~\[\]\x60()<>]`
 
+/** Everything after a url's scheme name, from `://`; needs the `u` flag. */
+export const PROSE_URL_AFTER_SCHEME_SOURCE = String.raw`:\/\/(?:${IPV6_HTTP_HOST_SOURCE}(?:${PROSE_HTTP_URL_BODY_SOURCE})?|${PROSE_HTTP_URL_BODY_SOURCE})`
+
 /** xterm's default web-links url pattern, also ended by prose punctuation; needs the `u` flag. */
-export const PROSE_HTTP_URL_SOURCE = String.raw`https?:\/\/(?:${IPV6_HTTP_HOST_SOURCE}(?:${PROSE_HTTP_URL_BODY_SOURCE})?|${PROSE_HTTP_URL_BODY_SOURCE})`
+export const PROSE_HTTP_URL_SOURCE = `https?${PROSE_URL_AFTER_SCHEME_SOURCE}`
 
 const PROSE_URL_TERMINATOR = new RegExp(PROSE_URL_TERMINATOR_SOURCE, 'u')
 const PROSE_URL_END = new RegExp(String.raw`\s|${PROSE_URL_TERMINATOR_SOURCE}`, 'u')
